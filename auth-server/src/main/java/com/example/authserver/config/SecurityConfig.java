@@ -8,7 +8,6 @@ import com.nimbusds.jose.jwk.source.JWKSource;
 import com.nimbusds.jose.proc.SecurityContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.core.annotation.Order;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -48,38 +47,37 @@ public class SecurityConfig {
     }
 
     @Bean
-    @Order(1)
-    public SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain defaultSecurityFilterChain(HttpSecurity http) throws Exception {
         OAuth2AuthorizationServerConfiguration.applyDefaultSecurity(http);
         http.getConfigurer(OAuth2AuthorizationServerConfigurer.class)
-            .oidc(Customizer.withDefaults()); // Enable OpenID Connect 1.0
-        http
-            .exceptionHandling((exceptions) -> exceptions
-                .authenticationEntryPoint(
-                    new LoginUrlAuthenticationEntryPoint("/login"))
-            );
-        return http.build();
-    }
+                .oidc(Customizer.withDefaults());
 
-    @Bean
-    @Order(2)
-    public SecurityFilterChain defaultSecurityFilterChain(HttpSecurity http) throws Exception {
         http
-            .authorizeHttpRequests((authorize) -> authorize
-                .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/.well-known/**").permitAll()
-                .anyRequest().authenticated()
-            )
-                .formLogin(form -> form
-                        .failureHandler(loggingAuthenticationFailureHandler));
+                .exceptionHandling(exceptions ->
+                        exceptions.authenticationEntryPoint(new LoginUrlAuthenticationEntryPoint("/login"))
+                )
+                .authorizeHttpRequests(authorize ->
+                        authorize
+                                .requestMatchers("/error").permitAll()
+                                .anyRequest().authenticated()
+                )
+                .formLogin(formLogin ->
+                        formLogin
+                                .loginPage("/login")
+                                .failureHandler(loggingAuthenticationFailureHandler)
+                                .permitAll()
+                )
+                .oauth2ResourceServer(resourceServer -> resourceServer.jwt(Customizer.withDefaults()));
+
         return http.build();
     }
 
     @Bean
     public UserDetailsService userDetailsService(PasswordEncoder passwordEncoder) {
         UserDetails userDetails = User.withUsername("user")
-            .password(passwordEncoder.encode("password"))
-            .roles("USER")
-            .build();
+                .password(passwordEncoder.encode("password"))
+                .roles("USER")
+                .build();
         return new InMemoryUserDetailsManager(userDetails);
     }
 
@@ -91,16 +89,16 @@ public class SecurityConfig {
     @Bean
     public RegisteredClientRepository registeredClientRepository() {
         RegisteredClient registeredClient = RegisteredClient.withId(UUID.randomUUID().toString())
-            .clientId("client-app")
-            .clientSecret("{noop}secret")
-            .clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC)
-            .authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
-            .authorizationGrantType(AuthorizationGrantType.REFRESH_TOKEN)
-            .redirectUri("http://localhost:9001/login/oauth2/code/client-app")
-            .scope(OidcScopes.OPENID)
-            .scope("read")
-            .clientSettings(ClientSettings.builder().requireAuthorizationConsent(true).build())
-            .build();
+                .clientId("client-app")
+                .clientSecret("{noop}secret")
+                .clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC)
+                .authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
+                .authorizationGrantType(AuthorizationGrantType.REFRESH_TOKEN)
+                .redirectUri("http://localhost:9001/login/oauth2/code/client-app")
+                .scope(OidcScopes.OPENID)
+                .scope("read")
+                .clientSettings(ClientSettings.builder().requireAuthorizationConsent(true).build())
+                .build();
 
         return new InMemoryRegisteredClientRepository(registeredClient);
     }
@@ -111,9 +109,9 @@ public class SecurityConfig {
         RSAPublicKey publicKey = (RSAPublicKey) keyPair.getPublic();
         RSAPrivateKey privateKey = (RSAPrivateKey) keyPair.getPrivate();
         RSAKey rsaKey = new RSAKey.Builder(publicKey)
-            .privateKey(privateKey)
-            .keyID(UUID.randomUUID().toString())
-            .build();
+                .privateKey(privateKey)
+                .keyID(UUID.randomUUID().toString())
+                .build();
         JWKSet jwkSet = new JWKSet(rsaKey);
         return new ImmutableJWKSet<>(jwkSet);
     }
@@ -132,9 +130,6 @@ public class SecurityConfig {
 
     @Bean
     public AuthorizationServerSettings authorizationServerSettings() {
-        // 수정: issuer 설정 추가
-        return AuthorizationServerSettings.builder()
-                .issuer("http://localhost:9000")
-                .build();
+        return AuthorizationServerSettings.builder().issuer("http://localhost:9000").build();
     }
 }
