@@ -60,13 +60,13 @@ public class SecurityConfig {
     public SecurityFilterChain defaultSecurityFilterChain(HttpSecurity http) throws Exception {
         http
             .authorizeHttpRequests((authorize) -> authorize
-                // 수정: /.well-known/** 경로 허용
-                .requestMatchers("/login", "/swagger-ui/**", "/v3/api-docs/**", "/.well-known/**").permitAll()
+                .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/.well-known/**").permitAll()
                 .anyRequest().authenticated()
             )
             .formLogin(form -> form
-                .loginPage("/login")
-                .failureHandler(new LoggingAuthenticationFailureHandler()));
+                    .loginPage("/login")
+                    .failureHandler(new LoggingAuthenticationFailureHandler())
+                    .permitAll());
         return http.build();
     }
 
