@@ -39,6 +39,12 @@ import java.util.UUID;
 @EnableWebSecurity
 public class SecurityConfig {
 
+    private final LoggingAuthenticationFailureHandler loggingAuthenticationFailureHandler;
+
+    public SecurityConfig(LoggingAuthenticationFailureHandler loggingAuthenticationFailureHandler) {
+        this.loggingAuthenticationFailureHandler = loggingAuthenticationFailureHandler;
+    }
+
     @Bean
     @Order(1)
     public SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity http) throws Exception {
@@ -61,7 +67,8 @@ public class SecurityConfig {
                 .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/.well-known/**").permitAll()
                 .anyRequest().authenticated()
             )
-            .formLogin(Customizer.withDefaults());
+                .formLogin(form -> form
+                        .failureHandler(loggingAuthenticationFailureHandler));
         return http.build();
     }
 
