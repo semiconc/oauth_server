@@ -59,7 +59,8 @@ public class SecurityConfig {
     public SecurityFilterChain defaultSecurityFilterChain(HttpSecurity http) throws Exception {
         http
             .authorizeHttpRequests((authorize) -> authorize
-                .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
+                // 수정: /.well-known/** 경로 허용
+                .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/.well-known/**").permitAll()
                 .anyRequest().authenticated()
             )
             .formLogin(Customizer.withDefaults());
@@ -120,6 +121,9 @@ public class SecurityConfig {
 
     @Bean
     public AuthorizationServerSettings authorizationServerSettings() {
-        return AuthorizationServerSettings.builder().build();
+        // 수정: issuer 설정 추가
+        return AuthorizationServerSettings.builder()
+                .issuer("http://localhost:9000")
+                .build();
     }
 }
