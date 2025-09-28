@@ -61,10 +61,7 @@ public class SecurityConfig {
                 .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/.well-known/**").permitAll()
                 .anyRequest().authenticated()
             )
-            .formLogin(form -> form
-                    .loginPage("/login")
-                    .failureHandler(new LoggingAuthenticationFailureHandler())
-                    .permitAll());
+            .formLogin(Customizer.withDefaults());
         return http.build();
     }
 
