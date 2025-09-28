@@ -61,10 +61,11 @@ public class SecurityConfig {
         http
             .authorizeHttpRequests((authorize) -> authorize
                 // 수정: /.well-known/** 경로 허용
-                .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/.well-known/**").permitAll()
+                .requestMatchers("/login", "/swagger-ui/**", "/v3/api-docs/**", "/.well-known/**").permitAll()
                 .anyRequest().authenticated()
             )
             .formLogin(form -> form
+                .loginPage("/login")
                 .failureHandler(new LoggingAuthenticationFailureHandler()));
         return http.build();
     }
