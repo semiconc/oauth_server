@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Authorized</title>
+</head>
+<body>
+    <h1>Authorization Successful!</h1>
+    <h2>Welcome, <span th:text="${userName}">User</span>!</h2>
+    <h3>Your Details:</h3>
+    <ul>
+        <li th:each="attr : ${userAttributes}">
+            <strong th:text="${attr.key}"></strong>: <span th:text="${attr.value}"></span>
+        </li>
+    </ul>
+    <a href="/">Back to Home</a>
+</body>
+</html>
