@@ -1,5 +1,6 @@
 package com.example.authserver.config;
 
+import com.example.authserver.handler.LoggingAuthenticationFailureHandler;
 import com.nimbusds.jose.jwk.JWKSet;
 import com.nimbusds.jose.jwk.RSAKey;
 import com.nimbusds.jose.jwk.source.ImmutableJWKSet;
@@ -63,7 +64,8 @@ public class SecurityConfig {
                 .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/.well-known/**").permitAll()
                 .anyRequest().authenticated()
             )
-            .formLogin(form -> form.failureUrl("/login?error"));
+            .formLogin(form -> form
+                .failureHandler(new LoggingAuthenticationFailureHandler()));
         return http.build();
     }
 
