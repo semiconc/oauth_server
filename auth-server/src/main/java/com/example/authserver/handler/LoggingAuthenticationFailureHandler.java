@@ -11,6 +11,9 @@ import org.springframework.security.web.authentication.SimpleUrlAuthenticationFa
 
 import java.io.IOException;
 
+import org.springframework.stereotype.Component;
+
+@Component
 public class LoggingAuthenticationFailureHandler implements AuthenticationFailureHandler {
 
     private static final Logger logger = LoggerFactory.getLogger(LoggingAuthenticationFailureHandler.class);
