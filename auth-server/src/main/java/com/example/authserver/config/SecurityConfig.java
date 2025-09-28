@@ -46,8 +46,10 @@ public class SecurityConfig {
         http.getConfigurer(OAuth2AuthorizationServerConfigurer.class)
             .oidc(Customizer.withDefaults()); // Enable OpenID Connect 1.0
         http
-            .oauth2ResourceServer((resourceServer) -> resourceServer
-                .jwt(Customizer.withDefaults()));
+            .exceptionHandling((exceptions) -> exceptions
+                .authenticationEntryPoint(
+                    new LoginUrlAuthenticationEntryPoint("/login"))
+            );
         return http.build();
     }
 
@@ -59,7 +61,10 @@ public class SecurityConfig {
                 .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/.well-known/**").permitAll()
                 .anyRequest().authenticated()
             )
-            .formLogin(Customizer.withDefaults());
+            .formLogin(form -> form
+                    .loginPage("/login")
+                    .failureHandler(new LoggingAuthenticationFailureHandler())
+                    .permitAll());
         return http.build();
     }
 
