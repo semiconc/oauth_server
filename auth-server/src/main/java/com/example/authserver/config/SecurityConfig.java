@@ -46,8 +46,10 @@ public class SecurityConfig {
         http.getConfigurer(OAuth2AuthorizationServerConfigurer.class)
             .oidc(Customizer.withDefaults()); // Enable OpenID Connect 1.0
         http
-            .oauth2ResourceServer((resourceServer) -> resourceServer
-                .jwt(Customizer.withDefaults()));
+            .exceptionHandling((exceptions) -> exceptions
+                .authenticationEntryPoint(
+                    new LoginUrlAuthenticationEntryPoint("/login"))
+            );
         return http.build();
     }
 
