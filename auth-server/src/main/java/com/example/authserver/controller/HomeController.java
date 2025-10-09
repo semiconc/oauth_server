@@ -1,13 +1,19 @@
 package com.example.authserver.controller;
 
+import org.springframework.security.core.Authentication;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RestController;
 
-@RestController
+@Controller
 public class HomeController {
 
     @GetMapping("/")
-    public String home() {
-        return "Welcome to the Authorization Server!";
+    public String home(Authentication authentication, Model model) {
+        if (authentication != null && authentication.isAuthenticated()) {
+            model.addAttribute("username", authentication.getName());
+            return "home";
+        }
+        return "redirect:/login";
     }
 }

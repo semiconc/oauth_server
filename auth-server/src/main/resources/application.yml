@@ -1,6 +1,16 @@
 server:
   port: 9000
+  servlet:
+    session:
+      cookie:
+        same-site: lax
 
 spring:
   application:
     name: auth-server
+
+hanko:
+  passkey:
+    api-url: http://localhost:8000
+    tenant-id: ${HANKO_TENANT_ID:}
+    api-key: ${HANKO_API_KEY:}
