@@ -73,7 +73,6 @@ public class SecurityConfig {
                 )
                 .formLogin(formLogin ->
                         formLogin
-                                .loginPage("/login")
                                 .failureHandler(loggingAuthenticationFailureHandler)
                 );
         return http.build();
