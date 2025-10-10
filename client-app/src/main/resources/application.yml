@@ -1,5 +1,9 @@
 server:
   port: 9001
+  servlet:
+    session:
+      cookie:
+        same-site: lax
 
 spring:
   application:

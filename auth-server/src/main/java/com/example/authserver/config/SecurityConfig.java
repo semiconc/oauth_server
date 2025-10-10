@@ -15,7 +15,6 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
@@ -68,12 +67,20 @@ public class SecurityConfig {
         http
                 .authorizeHttpRequests(authorize ->
                         authorize
-                                .requestMatchers("/login", "/error").permitAll()
+                                .requestMatchers("/login", "/error", "/.well-known/**", "/api/passkey/login/**", "/css/**", "/js/**").permitAll()
+                                .requestMatchers("/register-passkey", "/api/passkey/register/**").authenticated()
                                 .anyRequest().authenticated()
                 )
                 .formLogin(formLogin ->
                         formLogin
+                                .loginPage("/login")
                                 .failureHandler(loggingAuthenticationFailureHandler)
+                )
+                .csrf(csrf ->
+                        csrf.ignoringRequestMatchers("/api/passkey/**")
+                )
+                .sessionManagement(session ->
+                        session.maximumSessions(1)
                 );
         return http.build();
     }
@@ -89,7 +96,7 @@ public class SecurityConfig {
 
     @Bean
     public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
+        return org.springframework.security.crypto.factory.PasswordEncoderFactories.createDelegatingPasswordEncoder();
     }
 
     @Bean
@@ -98,6 +105,7 @@ public class SecurityConfig {
                 .clientId("client-app")
                 .clientSecret("{noop}secret")
                 .clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC)
+                .clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_POST)
                 .authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
                 .authorizationGrantType(AuthorizationGrantType.REFRESH_TOKEN)
                 .redirectUri("http://localhost:9001/login/oauth2/code/client-app")
