@@ -1,15 +1,14 @@
 package com.example.authserver.service;
 
 import com.example.authserver.config.HankoPasskeyProperties;
-import com.example.authserver.dto.PasskeyFinalizeRequest;
-import com.example.authserver.dto.PasskeyLoginInitRequest;
-import com.example.authserver.dto.PasskeyRegistrationInitRequest;
 import com.fasterxml.jackson.databind.JsonNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
+
+import java.util.Map;
 
 @Service
 public class HankoPasskeyService {
@@ -21,23 +20,50 @@ public class HankoPasskeyService {
 
     public HankoPasskeyService(HankoPasskeyProperties properties, WebClient.Builder webClientBuilder) {
         this.properties = properties;
+        String apiUrl = properties.getApiUrl();
+        logger.info("Initializing HankoPasskeyService with API URL: {}", apiUrl);
+        logger.info("Tenant ID: {}", properties.getTenantId());
+
         this.webClient = webClientBuilder
-                .baseUrl(properties.getApiUrl())
+                .baseUrl(apiUrl)
                 .defaultHeader("apiKey", properties.getApiKey() != null ? properties.getApiKey() : "")
                 .build();
     }
 
     /**
-     * Initialize passkey registration
+     * Get credential options for a user to check if they have registered passkeys
      */
-    public Mono<JsonNode> initializeRegistration(PasskeyRegistrationInitRequest request) {
-        String url = String.format("/%s/registration/initialize", properties.getTenantId());
+    public Mono<JsonNode> getCredentialOptions(String userId) {
+        String url = String.format("/%s/login/initialize", properties.getTenantId());
+        String fullUrl = properties.getApiUrl() + url;
 
-        logger.info("Initializing passkey registration for user: {}", request.getUsername());
+        logger.info("Getting credential options for user: {}", userId);
+        logger.info("Request URL: {}", fullUrl);
 
         return webClient.post()
                 .uri(url)
-                .bodyValue(request)
+                .bodyValue(Map.of("user_id", userId))
+                .retrieve()
+                .bodyToMono(JsonNode.class)
+                .doOnSuccess(response -> logger.info("Successfully got credential options"))
+                .doOnError(error -> logger.error("Failed to get credential options from URL: {}", fullUrl, error));
+    }
+
+    /**
+     * Initialize passkey registration
+     */
+    public Mono<JsonNode> initializeRegistration(String userId, String username, String displayName) {
+        String url = String.format("/%s/registration/initialize", properties.getTenantId());
+
+        logger.info("Initializing passkey registration for user: {}", username);
+
+        return webClient.post()
+                .uri(url)
+                .bodyValue(Map.of(
+                        "user_id", userId,
+                        "username", username,
+                        "display_name", displayName
+                ))
                 .retrieve()
                 .bodyToMono(JsonNode.class)
                 .doOnError(error -> logger.error("Failed to initialize registration", error));
@@ -46,51 +72,98 @@ public class HankoPasskeyService {
     /**
      * Finalize passkey registration
      */
-    public Mono<JsonNode> finalizeRegistration(PasskeyFinalizeRequest request) {
+    public Mono<JsonNode> finalizeRegistration(JsonNode credential) {
         String url = String.format("/%s/registration/finalize", properties.getTenantId());
 
         logger.info("Finalizing passkey registration");
 
-        // Send the credential directly (unwrapped) to Hanko API
         return webClient.post()
                 .uri(url)
-                .bodyValue(request.getCredential())
+                .bodyValue(credential)
                 .retrieve()
                 .bodyToMono(JsonNode.class)
                 .doOnError(error -> logger.error("Failed to finalize registration", error));
     }
 
     /**
-     * Initialize passkey login
+     * Finalize passkey login
      */
-    public Mono<JsonNode> initializeLogin(PasskeyLoginInitRequest request) {
-        String url = String.format("/%s/login/initialize", properties.getTenantId());
+    public Mono<JsonNode> finalizeLogin(JsonNode credential) {
+        String url = String.format("/%s/login/finalize", properties.getTenantId());
+        String fullUrl = properties.getApiUrl() + url;
 
-        logger.info("Initializing passkey login for user: {}", request.getUserId());
+        logger.info("Finalizing passkey login");
+        logger.info("Request URL: {}", fullUrl);
+        logger.info("Credential payload: {}", credential.toString());
 
         return webClient.post()
                 .uri(url)
-                .bodyValue(request)
+                .bodyValue(credential)
                 .retrieve()
+                .onStatus(status -> status.is4xxClientError() || status.is5xxServerError(),
+                        clientResponse -> {
+                            logger.error("Hanko server returned error status: {}", clientResponse.statusCode());
+                            return clientResponse.bodyToMono(String.class)
+                                    .flatMap(errorBody -> {
+                                        logger.error("Error response body: {}", errorBody);
+                                        return Mono.error(new RuntimeException(
+                                                String.format("Hanko server error: %s - %s",
+                                                        clientResponse.statusCode(), errorBody)
+                                        ));
+                                    });
+                        })
                 .bodyToMono(JsonNode.class)
-                .doOnError(error -> logger.error("Failed to initialize login", error));
+                .doOnSuccess(response -> {
+                    logger.info("Passkey login finalized successfully");
+                    logger.info("Response: {}", response.toString());
+                })
+                .doOnError(error -> {
+                    logger.error("Failed to finalize login to URL: {}", fullUrl);
+                    logger.error("Error details: ", error);
+                });
     }
 
     /**
-     * Finalize passkey login
+     * Check if user has registered credentials by attempting login initialization
+     * Returns credential options if passkeys exist, or handles errors gracefully
      */
-    public Mono<JsonNode> finalizeLogin(PasskeyFinalizeRequest request) {
-        String url = String.format("/%s/login/finalize", properties.getTenantId());
+    public Mono<JsonNode> checkCredentials(String userId) {
+        String url = String.format("/%s/login/initialize", properties.getTenantId());
+        String fullUrl = properties.getApiUrl() + url;
 
-        logger.info("Finalizing passkey login");
+        logger.info("Checking credentials for user: {}", userId);
+        logger.info("Request URL: {}", fullUrl);
 
-        // Send the credential directly (unwrapped) to Hanko API
         return webClient.post()
                 .uri(url)
-                .bodyValue(request.getCredential())
+                .bodyValue(Map.of("user_id", userId))
                 .retrieve()
                 .bodyToMono(JsonNode.class)
-                .doOnSuccess(response -> logger.info("Passkey login finalized successfully"))
-                .doOnError(error -> logger.error("Failed to finalize login", error));
+                .doOnSuccess(response -> logger.info("Successfully retrieved credential options"))
+                .onErrorResume(error -> {
+                    logger.info("No credentials found for user or error occurred: {}", error.getMessage());
+                    // Return empty credentials list when error occurs (likely no passkeys registered)
+                    com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
+                    com.fasterxml.jackson.databind.node.ObjectNode emptyResponse = mapper.createObjectNode();
+                    com.fasterxml.jackson.databind.node.ObjectNode publicKey = mapper.createObjectNode();
+                    publicKey.set("allowCredentials", mapper.createArrayNode());
+                    emptyResponse.set("publicKey", publicKey);
+                    return Mono.just(emptyResponse);
+                });
+    }
+
+    /**
+     * Delete a passkey credential
+     */
+    public Mono<Void> deleteCredential(String credentialId) {
+        String url = String.format("/%s/credentials/%s", properties.getTenantId(), credentialId);
+
+        logger.info("Deleting credential: {}", credentialId);
+
+        return webClient.delete()
+                .uri(url)
+                .retrieve()
+                .bodyToMono(Void.class)
+                .doOnError(error -> logger.error("Failed to delete credential", error));
     }
 }

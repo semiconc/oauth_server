@@ -1,19 +1,80 @@
 package com.example.authserver.dto;
 
-import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class PasskeyCredentialResponse {
 
+    @JsonProperty("id")
     private String id;
-    private String rawId;
-    private JsonNode response;
-    private String type;
-    private JsonNode clientExtensionResults;
-    private JsonNode authenticatorAttachment;
 
-    public PasskeyCredentialResponse() {
+    @JsonProperty("rawId")
+    private String rawId;
+
+    @JsonProperty("type")
+    private String type;
+
+    @JsonProperty("response")
+    private AuthenticatorResponse response;
+
+    public static class AuthenticatorResponse {
+        @JsonProperty("clientDataJSON")
+        private String clientDataJSON;
+
+        @JsonProperty("authenticatorData")
+        private String authenticatorData;
+
+        @JsonProperty("signature")
+        private String signature;
+
+        @JsonProperty("userHandle")
+        private String userHandle;
+
+        @JsonProperty("attestationObject")
+        private String attestationObject;
+
+        // Getters and setters
+        public String getClientDataJSON() {
+            return clientDataJSON;
+        }
+
+        public void setClientDataJSON(String clientDataJSON) {
+            this.clientDataJSON = clientDataJSON;
+        }
+
+        public String getAuthenticatorData() {
+            return authenticatorData;
+        }
+
+        public void setAuthenticatorData(String authenticatorData) {
+            this.authenticatorData = authenticatorData;
+        }
+
+        public String getSignature() {
+            return signature;
+        }
+
+        public void setSignature(String signature) {
+            this.signature = signature;
+        }
+
+        public String getUserHandle() {
+            return userHandle;
+        }
+
+        public void setUserHandle(String userHandle) {
+            this.userHandle = userHandle;
+        }
+
+        public String getAttestationObject() {
+            return attestationObject;
+        }
+
+        public void setAttestationObject(String attestationObject) {
+            this.attestationObject = attestationObject;
+        }
     }
 
+    // Getters and setters
     public String getId() {
         return id;
     }
@@ -30,14 +91,6 @@ public class PasskeyCredentialResponse {
         this.rawId = rawId;
     }
 
-    public JsonNode getResponse() {
-        return response;
-    }
-
-    public void setResponse(JsonNode response) {
-        this.response = response;
-    }
-
     public String getType() {
         return type;
     }
@@ -46,19 +99,11 @@ public class PasskeyCredentialResponse {
         this.type = type;
     }
 
-    public JsonNode getClientExtensionResults() {
-        return clientExtensionResults;
+    public AuthenticatorResponse getResponse() {
+        return response;
     }
 
-    public void setClientExtensionResults(JsonNode clientExtensionResults) {
-        this.clientExtensionResults = clientExtensionResults;
-    }
-
-    public JsonNode getAuthenticatorAttachment() {
-        return authenticatorAttachment;
-    }
-
-    public void setAuthenticatorAttachment(JsonNode authenticatorAttachment) {
-        this.authenticatorAttachment = authenticatorAttachment;
+    public void setResponse(AuthenticatorResponse response) {
+        this.response = response;
     }
 }

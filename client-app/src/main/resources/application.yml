@@ -24,3 +24,9 @@ spring:
         provider:
           spring:
             issuer-uri: http://localhost:9000
+
+logging:
+  level:
+    org.springframework.security: DEBUG
+    org.springframework.security.oauth2: DEBUG
+    org.springframework.web: DEBUG

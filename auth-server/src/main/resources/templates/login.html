@@ -147,59 +147,27 @@
 
         .passkey-section {
             margin-top: 20px;
-            padding-top: 20px;
-            border-top: 1px solid #eee;
-        }
-
-        .passkey-info {
-            text-align: center;
-            color: #666;
-            font-size: 14px;
-            margin-top: 20px;
-        }
-
-        .register-passkey-link {
-            text-align: center;
-            margin-top: 15px;
-        }
-
-        .register-passkey-link a {
-            color: #667eea;
-            text-decoration: none;
-            font-weight: 500;
-        }
-
-        .register-passkey-link a:hover {
-            text-decoration: underline;
         }
 
         #passkeyStatus {
-            margin-top: 10px;
-            padding: 10px;
+            margin-bottom: 15px;
+            padding: 12px;
             border-radius: 5px;
-            text-align: center;
             display: none;
         }
 
-        .hidden {
-            display: none;
+        #passkeyStatus.info {
+            background: #d1ecf1;
+            border: 1px solid #17a2b8;
+            color: #0c5460;
         }
 
-        .loader {
-            border: 3px solid #f3f3f3;
-            border-top: 3px solid #667eea;
-            border-radius: 50%;
-            width: 20px;
-            height: 20px;
-            animation: spin 1s linear infinite;
-            display: inline-block;
-            margin-left: 10px;
+        #passkeyStatus.error {
+            background: #f8d7da;
+            border: 1px solid #dc3545;
+            color: #721c24;
         }
 
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
     </style>
 </head>
 <body>
@@ -228,7 +196,7 @@
             <input type="password" id="password" name="password" required>
         </div>
 
-        <button type="submit" class="btn-primary">Sign in with Password</button>
+        <button type="submit" class="btn-primary">Sign In with Password</button>
     </form>
 
     <div class="divider">
@@ -243,20 +211,12 @@
                 <input type="text" id="passkeyUsername" name="passkeyUsername" required>
             </div>
             <button type="submit" class="btn-secondary" id="passkeyLoginBtn">
-                Sign in with Passkey
+                Sign In with Passkey
             </button>
         </form>
-
-        <div class="register-passkey-link">
-            <a href="#" id="registerPasskeyLink">Register a new passkey</a>
-        </div>
-    </div>
-
-    <div class="passkey-info">
-        Sign in faster and more securely with passkeys
     </div>
 </div>
 
-<script src="/js/passkey-auth.js"></script>
+<script src="/js/passkey-login.js"></script>
 </body>
 </html>

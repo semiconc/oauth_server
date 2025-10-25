@@ -67,13 +67,15 @@ public class SecurityConfig {
         http
                 .authorizeHttpRequests(authorize ->
                         authorize
-                                .requestMatchers("/login", "/error", "/.well-known/**", "/api/passkey/login/**", "/css/**", "/js/**").permitAll()
-                                .requestMatchers("/register-passkey", "/api/passkey/register/**").authenticated()
+                                .requestMatchers("/login", "/error", "/.well-known/**", "/css/**", "/js/**").permitAll()
+                                .requestMatchers("/api/passkey/login/**").permitAll()  // Allow passkey login without auth
+                                .requestMatchers("/api/passkey/**").authenticated()  // Other passkey APIs require auth
                                 .anyRequest().authenticated()
                 )
                 .formLogin(formLogin ->
                         formLogin
                                 .loginPage("/login")
+                                .defaultSuccessUrl("/home", false)  // false = use saved request if available
                                 .failureHandler(loggingAuthenticationFailureHandler)
                 )
                 .csrf(csrf ->

@@ -16,4 +16,13 @@ public class HomeController {
         }
         return "redirect:/login";
     }
+
+    @GetMapping("/home")
+    public String passkeyManagement(Authentication authentication, Model model) {
+        if (authentication != null && authentication.isAuthenticated()) {
+            model.addAttribute("username", authentication.getName());
+            return "passkey-management";
+        }
+        return "redirect:/login";
+    }
 }

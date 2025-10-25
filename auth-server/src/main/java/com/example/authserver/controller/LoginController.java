@@ -10,9 +10,4 @@ public class LoginController {
     public String login() {
         return "login";
     }
-
-    @GetMapping("/register-passkey")
-    public String registerPasskey() {
-        return "register-passkey";
-    }
 }

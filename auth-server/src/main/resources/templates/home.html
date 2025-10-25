@@ -103,6 +103,17 @@
             background: #f8f9ff;
         }
 
+        .btn-passkey {
+            background: #ffc107;
+            color: #333;
+        }
+
+        .btn-passkey:hover {
+            background: #e0a800;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(255, 193, 7, 0.4);
+        }
+
         .user-info {
             background: #f0f0f0;
             padding: 15px;
@@ -125,18 +136,18 @@
     </div>
 
     <div class="info-box">
-        <h2>Secure Your Account with Passkeys</h2>
+        <h2>About This Server</h2>
         <p>
-            Passkeys provide a more secure and convenient way to sign in. You can use your fingerprint,
-            face, or device PIN instead of remembering passwords.
+            This is an OAuth2 Authorization Server built with Spring Security.
+            You can use this server to authenticate and authorize access to protected resources.
         </p>
         <p>
-            <strong>Benefits:</strong> Faster login, phishing-resistant, and more secure than passwords.
+            <strong>Features:</strong> OAuth2 authorization code flow, JWT tokens, OIDC support, and refresh tokens.
         </p>
     </div>
 
     <div class="button-group">
-        <a href="/register-passkey" class="button-link btn-primary">Register a Passkey</a>
+        <a href="/home" class="btn-passkey button-link">Manage Passkeys</a>
         <form th:action="@{/logout}" method="post" style="margin: 0;">
             <button type="submit" class="btn-secondary">Logout</button>
         </form>

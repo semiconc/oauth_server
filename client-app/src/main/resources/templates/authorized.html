@@ -36,6 +36,12 @@
         .token-btn:hover {
             background-color: #218838;
         }
+        .passkey-btn {
+            background-color: #ffc107;
+        }
+        .passkey-btn:hover {
+            background-color: #e0a800;
+        }
     </style>
 </head>
 <body>
@@ -44,8 +50,9 @@
 
     <div>
         <a href="/tokens" class="button token-btn" target="_blank">View Tokens (JSON)</a>
+        <a href="http://localhost:9000/home" class="button passkey-btn" target="_blank">Manage Passkeys</a>
         <a href="/" class="button">Back to Home</a>
-        <form action="/logout" method="post" style="display: inline;">
+        <form th:action="@{/logout}" method="post" style="display: inline;">
             <button type="submit" class="button logout-btn">Logout</button>
         </form>
     </div>
