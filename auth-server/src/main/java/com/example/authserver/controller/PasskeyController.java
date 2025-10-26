@@ -8,7 +8,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import com.example.authserver.security.PasskeyAuthenticationToken;
+import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContext;
@@ -32,9 +34,11 @@ public class PasskeyController {
     private final HankoPasskeyService passkeyService;
     private final SecurityContextRepository securityContextRepository = new HttpSessionSecurityContextRepository();
     private final HttpSessionRequestCache requestCache = new HttpSessionRequestCache();
+    private final JwtDecoder jwtDecoder;
 
-    public PasskeyController(HankoPasskeyService passkeyService) {
+    public PasskeyController(HankoPasskeyService passkeyService, JwtDecoder jwtDecoder) {
         this.passkeyService = passkeyService;
+        this.jwtDecoder = jwtDecoder;
     }
 
     /**
@@ -153,14 +157,18 @@ public class PasskeyController {
         return passkeyService.finalizeLogin(credential)
                 .map(jsonResponse -> {
                     // Extract user information from response
-                    String userId = extractUserId(jsonResponse);
+                    // Extract user information from response
+                    Map<String, String> userInfo = extractUserInfo(jsonResponse);
 
-                    if (userId != null) {
+                    if (userInfo != null && userInfo.get("userId") != null) {
+                        String userId = userInfo.get("userId");
+                        String credentialId = userInfo.get("credentialId");
+
                         // Create authentication token with USER role
-                        UsernamePasswordAuthenticationToken authToken =
-                                new UsernamePasswordAuthenticationToken(
+                        PasskeyAuthenticationToken authToken =
+                                new PasskeyAuthenticationToken(
                                         userId,
-                                        null,
+                                        credentialId,
                                         List.of(new SimpleGrantedAuthority("ROLE_USER"))
                                 );
 
@@ -201,57 +209,37 @@ public class PasskeyController {
                 });
     }
 
-    private String extractUserId(JsonNode response) {
+    private Map<String, String> extractUserInfo(JsonNode response) {
         try {
-            // Check for direct user_id field
-            if (response.has("user_id")) {
-                return response.get("user_id").asText();
-            }
-
-            // Check for nested credential.user_id
-            if (response.has("credential") && response.get("credential").has("user_id")) {
-                return response.get("credential").get("user_id").asText();
-            }
-
-            // Check for JWT token and decode it
             if (response.has("token")) {
                 String token = response.get("token").asText();
-                return extractUserIdFromJWT(token);
+                return parseAndValidateJwt(token);
             }
+
+            // Fallback for non-JWT responses (if any)
+            if (response.has("user_id")) {
+                return Map.of("userId", response.get("user_id").asText());
+            }
+            if (response.has("credential") && response.get("credential").has("user_id")) {
+                return Map.of("userId", response.get("credential").get("user_id").asText());
+            }
+
         } catch (Exception e) {
-            logger.error("Error extracting user ID from response", e);
+            logger.error("Error extracting user info from response", e);
         }
         return null;
     }
 
-    private String extractUserIdFromJWT(String token) {
+    private Map<String, String> parseAndValidateJwt(String token) {
         try {
-            // JWT format: header.payload.signature
-            String[] parts = token.split("\\.");
-            if (parts.length != 3) {
-                logger.error("Invalid JWT token format");
-                return null;
-            }
+            Jwt jwt = jwtDecoder.decode(token);
+            String userId = jwt.getSubject();
+            String credentialId = jwt.getClaimAsString("credential_id");
 
-            // Decode the payload (second part)
-            String payload = parts[1];
-            byte[] decodedBytes = java.util.Base64.getUrlDecoder().decode(payload);
-            String decodedPayload = new String(decodedBytes, java.nio.charset.StandardCharsets.UTF_8);
-
-            logger.info("Decoded JWT payload: {}", decodedPayload);
-
-            // Parse the JSON payload
-            com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
-            JsonNode payloadNode = mapper.readTree(decodedPayload);
-
-            // Extract "sub" (subject) field which contains the user ID
-            if (payloadNode.has("sub")) {
-                String userId = payloadNode.get("sub").asText();
-                logger.info("Extracted user ID from JWT: {}", userId);
-                return userId;
-            }
+            logger.info("Successfully validated JWT and extracted user ID '{}' and credential ID '{}'", userId, credentialId);
+            return Map.of("userId", userId, "credentialId", credentialId);
         } catch (Exception e) {
-            logger.error("Error decoding JWT token", e);
+            logger.error("Failed to validate JWT token", e);
         }
         return null;
     }
