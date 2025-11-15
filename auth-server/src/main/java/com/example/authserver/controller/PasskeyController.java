@@ -217,11 +217,11 @@ public class PasskeyController {
             }
 
             // Fallback for non-JWT responses (if any)
-            if (response.has("user_id")) {
-                return Map.of("userId", response.get("user_id").asText());
-            }
             if (response.has("credential") && response.get("credential").has("user_id")) {
                 return Map.of("userId", response.get("credential").get("user_id").asText());
+            }
+            if (response.has("user_id")) {
+                return Map.of("userId", response.get("user_id").asText());
             }
 
         } catch (Exception e) {
