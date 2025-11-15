@@ -6,6 +6,7 @@ import com.nimbusds.jose.jwk.RSAKey;
 import com.nimbusds.jose.jwk.source.ImmutableJWKSet;
 import com.nimbusds.jose.jwk.source.JWKSource;
 import com.nimbusds.jose.proc.SecurityContext;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
@@ -19,6 +20,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
 import org.springframework.security.oauth2.core.oidc.OidcScopes;
+import org.springframework.security.oauth2.jwt.JwtDecoder;
+import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 import org.springframework.security.oauth2.server.authorization.client.InMemoryRegisteredClientRepository;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
@@ -41,9 +44,21 @@ import java.util.UUID;
 public class SecurityConfig {
 
     private final LoggingAuthenticationFailureHandler loggingAuthenticationFailureHandler;
+    private final HankoPasskeyProperties hankoPasskeyProperties;
 
-    public SecurityConfig(LoggingAuthenticationFailureHandler loggingAuthenticationFailureHandler) {
+    public SecurityConfig(
+            LoggingAuthenticationFailureHandler loggingAuthenticationFailureHandler,
+            HankoPasskeyProperties hankoPasskeyProperties
+    ) {
         this.loggingAuthenticationFailureHandler = loggingAuthenticationFailureHandler;
+        this.hankoPasskeyProperties = hankoPasskeyProperties;
+    }
+
+    @Bean
+    @Qualifier("hankoJwtDecoder")
+    public JwtDecoder hankoJwtDecoder() {
+        String jwksUrl = hankoPasskeyProperties.getApiUrl() + "/.well-known/jwks.json";
+        return NimbusJwtDecoder.withJwkSetUri(jwksUrl).build();
     }
 
     @Bean
