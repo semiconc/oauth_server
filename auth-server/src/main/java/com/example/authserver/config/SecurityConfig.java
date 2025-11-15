@@ -130,7 +130,7 @@ public class SecurityConfig {
                 .redirectUri("http://localhost:9001/login/oauth2/code/client-app")
                 .scope(OidcScopes.OPENID)
                 .scope("read")
-                .clientSettings(ClientSettings.builder().requireAuthorizationConsent(true).build())
+                .clientSettings(ClientSettings.builder().requireAuthorizationConsent(true).requireProofKey(true).build())
                 .build();
 
         return new InMemoryRegisteredClientRepository(registeredClient);
