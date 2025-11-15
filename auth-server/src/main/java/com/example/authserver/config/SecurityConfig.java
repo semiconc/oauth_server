@@ -57,7 +57,9 @@ public class SecurityConfig {
     @Bean
     @Qualifier("hankoJwtDecoder")
     public JwtDecoder hankoJwtDecoder() {
-        String jwksUrl = hankoPasskeyProperties.getApiUrl() + "/.well-known/jwks.json";
+        String jwksUrl = String.format("%s/%s/.well-known/jwks.json",
+                hankoPasskeyProperties.getApiUrl(),
+                hankoPasskeyProperties.getTenantId());
         return NimbusJwtDecoder.withJwkSetUri(jwksUrl).build();
     }
 
