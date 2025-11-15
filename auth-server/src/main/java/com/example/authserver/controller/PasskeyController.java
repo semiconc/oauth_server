@@ -6,6 +6,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import com.example.authserver.security.PasskeyAuthenticationToken;
@@ -34,11 +35,11 @@ public class PasskeyController {
     private final HankoPasskeyService passkeyService;
     private final SecurityContextRepository securityContextRepository = new HttpSessionSecurityContextRepository();
     private final HttpSessionRequestCache requestCache = new HttpSessionRequestCache();
-    private final JwtDecoder jwtDecoder;
+    private final JwtDecoder hankoJwtDecoder;
 
-    public PasskeyController(HankoPasskeyService passkeyService, JwtDecoder jwtDecoder) {
+    public PasskeyController(HankoPasskeyService passkeyService, @Qualifier("hankoJwtDecoder") JwtDecoder hankoJwtDecoder) {
         this.passkeyService = passkeyService;
-        this.jwtDecoder = jwtDecoder;
+        this.hankoJwtDecoder = hankoJwtDecoder;
     }
 
     /**
@@ -232,9 +233,9 @@ public class PasskeyController {
 
     private Map<String, String> parseAndValidateJwt(String token) {
         try {
-            Jwt jwt = jwtDecoder.decode(token);
+            Jwt jwt = hankoJwtDecoder.decode(token);
             String userId = jwt.getSubject();
-            String credentialId = jwt.getClaimAsString("credential_id");
+            String credentialId = jwt.getClaimAsString("cred");
 
             logger.info("Successfully validated JWT and extracted user ID '{}' and credential ID '{}'", userId, credentialId);
             return Map.of("userId", userId, "credentialId", credentialId);
